@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Interface</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style src="style.css"></style>
+</head>
+<body class="bg-gray-900 text-white flex flex-col h-screen">
+
+    <header class="bg-gray-800/50 backdrop-blur-sm border-b border-gray-700 p-4 flex items-center justify-between shadow-lg">
+        <div class="flex items-center space-x-3">
+            <div class="p-2 bg-gradient-to-tr from-indigo-500 to-blue-500 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-hexagon-fill" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M8.5.134a1 1 0 0 0-1 0l-6 3.577a1 1 0 0 0-.5.866v6.846a1 1 0 0 0 .5.866l6 3.577a1 1 0 0 0 1 0l6-3.577a1 1 0 0 0 .5-.866V4.577a1 1 0 0 0-.5-.866z"/>
+                </svg>
+            </div>
+            <h1 class="text-xl font-bold text-gray-100">RAG Demo</h1>
+        </div>
+    </header>
+
+    <main id="chat-container" class="flex-1 overflow-y-auto p-6 space-y-6 no-scrollbar">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-tr from-indigo-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                OwO
+            </div>
+            <div class="bg-gray-800 rounded-2xl p-4 max-w-lg shadow-md">
+                <p class="text-gray-300">Hello! How can I help you today?</p>
+            </div>
+        </div>
+        
+        <div id="user-message-template" class="flex items-start gap-4 justify-end hidden">
+            <div class="bg-indigo-600 rounded-2xl p-4 max-w-lg shadow-md">
+                <p class="text-white"></p>
+            </div>
+            <div class="flex-shrink-0 w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-gray-300 font-bold">
+                (◔◡◔)
+            </div>
+        </div>
+
+        <div id="bot-message-template" class="flex items-start gap-4 hidden">
+            <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-tr from-indigo-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                OwO
+            </div>
+            <div class="bg-gray-800 rounded-2xl p-4 max-w-lg shadow-md">
+                <p class="text-gray-300"></p>
+            </div>
+        </div>
+        
+        <div id="typing-indicator-template" class="flex items-start gap-4 hidden">
+            <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-tr from-indigo-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                OwO
+            </div>
+            <div class="bg-gray-800 rounded-2xl p-4 shadow-md">
+                <div class="typing-indicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-gray-800/70 backdrop-blur-sm border-t border-gray-700 p-4">
+        <div class="max-w-3xl mx-auto">
+            <div class="bg-gray-900 rounded-xl flex items-center p-2 border border-gray-700 focus-within:ring-2 focus-within:ring-indigo-500 transition-shadow duration-300">
+                        
+                <input type="text" id="message-input" placeholder="Type your message..." class="flex-1 bg-transparent px-4 py-2 text-gray-200 placeholder-gray-500 focus:outline-none">
+                
+                <button id="voice-btn" class="p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded-full transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mic"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                </button>
+
+                <button id="send-btn" class="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-500 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed ml-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-send"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+                </button>
+            </div>
+            <p class="text-xs text-center text-gray-500 mt-2">Powered by the gpt-oss:120b-cloud</p>
+        </div>
+    </footer>
+
+    <script src="/static/script.js"></script>
+
+</body>
+</html>

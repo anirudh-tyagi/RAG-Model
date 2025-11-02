@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload PDF</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex h-screen items-center justify-center">
+
+    <div class="bg-gray-800 p-8 rounded-lg shadow-xl w-full max-w-md border border-gray-700">
+        <div class="flex items-center space-x-3 mb-6">
+            <div class="p-2 bg-gradient-to-tr from-indigo-500 to-blue-500 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-hexagon-fill" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M8.5.134a1 1 0 0 0-1 0l-6 3.577a1 1 0 0 0-.5.866v6.846a1 1 0 0 0 .5.866l6 3.577a1 1 0 0 0 1 0l6-3.577a1 1 0 0 0 .5-.866V4.577a1 1 0 0 0-.5-.866z"/>
+                </svg>
+            </div>
+            <h1 class="text-2xl font-bold text-gray-100">Upload PDF for RAG</h1>
+        </div>
+        
+        <p class="text-gray-400 mb-6">Please select a single PDF file to begin your chat session.</p>
+
+        <div class="space-y-4">
+            <input type="file" id="pdf-input" accept=".pdf" class="hidden"/>
+
+            <label for="pdf-input" class="w-full cursor-pointer bg-gray-700 text-gray-200 py-3 px-4 rounded-lg font-medium hover:bg-gray-600 transition-colors flex items-center justify-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-up"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/><path d="M12 10v6"/><path d="m15 13-3-3-3 3"/></svg>
+                <span>Select a PDF File</span>
+            </label>
+
+            <p class="text-center text-sm text-gray-400 h-5">
+                File selected: <span id="file-name-display" class="font-semibold text-gray-200">None</span>
+            </p>
+            
+            <button id="upload-btn" class="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-indigo-500 transition-colors disabled:bg-gray-600 disabled:cursor-not-allowed">
+                Upload and Start Chat
+            </button>
+
+            <p id="status-message" class="text-center text-sm text-red-400 h-5"></p>
+        </div>
+    </div>
+
+    <script src="/static/upload.js"></script>
+
+</body>
+</html>
