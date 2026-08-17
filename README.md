@@ -239,16 +239,6 @@ The first version worked, but the design had some load-bearing problems. For the
 
 ---
 
-## Status and limitations
-
-**Verified:** ruff, strict mypy, and 129 passing tests on the API; Biome and `tsc` on the web
-app.
-
-**Not yet verified end to end.** At the time of writing the stack has not been run against
-live services — no Docker build, no Qdrant, no ingested PDF. Expect small API-shape
-mismatches on the first real run, particularly around fastembed's encoder calls, Qdrant's
-hybrid query, `pymupdf4llm` output, and the Ollama Cloud client.
-
 **Known limitations:**
 
 - Ingestion is CPU-bound and slow on a laptop for large PDFs; `pymupdf` is the default parser
