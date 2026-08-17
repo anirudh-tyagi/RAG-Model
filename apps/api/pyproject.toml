@@ -15,8 +15,9 @@ dependencies = [
     # vector store + ONNX embeddings/reranking (no torch in the default install)
     "qdrant-client>=1.12",
     "fastembed>=0.5",
-    # LLM
-    "ollama>=0.4",
+    # LLM — an OpenAI-compatible client, so Groq, Ollama Cloud, OpenAI and
+    # anything else speaking that dialect are a base-URL change, not a rewrite.
+    "openai>=1.59",
     # queue + shared state
     "arq>=0.26",
     "redis>=5.2",
@@ -93,7 +94,6 @@ module = [
     "fastembed.*",
     "pymupdf4llm.*",
     "faster_whisper.*",
-    "ollama.*",
     "arq.*",
     "langfuse.*",
     "docling.*",

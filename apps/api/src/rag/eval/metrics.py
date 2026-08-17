@@ -14,7 +14,9 @@ from dataclasses import dataclass
 
 from rag.schemas import SearchResult
 
-CITATION = re.compile(r"\[(\d{1,2})\]")
+# Accepts full-width brackets as well as ASCII: gpt-oss models routinely emit
+# 【1】 instead of [1], and scoring those as "no citation" would be wrong.
+CITATION = re.compile(r"[\[【](\d{1,2})[\]】]")
 
 
 @dataclass(slots=True)

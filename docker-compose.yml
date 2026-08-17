@@ -1,6 +1,6 @@
 # Full stack: vector store, queue, API, ingestion worker, web UI.
 #
-#   cp .env.example .env   # then set OLLAMA_API_KEY
+#   cp .env.example .env   # then set LLM_API_KEY
 #   docker compose up --build
 #
 # First start downloads the embedding, reranking and Whisper models (~1.9GB

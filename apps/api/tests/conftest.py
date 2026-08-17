@@ -50,7 +50,7 @@ def _reset_singletons() -> None:
 def settings(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> Iterator[Settings]:
     """Isolated settings, pointed at a temp data directory."""
     monkeypatch.setenv("DATA_DIR", str(tmp_path / "data"))
-    monkeypatch.setenv("OLLAMA_API_KEY", "test-key")
+    monkeypatch.setenv("LLM_API_KEY", "test-key")
     monkeypatch.setenv("QDRANT_URL", "http://localhost:6333")
     monkeypatch.setenv("REDIS_URL", "redis://localhost:6379/15")
     monkeypatch.setenv("LOG_LEVEL", "WARNING")

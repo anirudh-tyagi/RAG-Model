@@ -17,6 +17,10 @@ interface Props {
 
 const CITATION_HREF = "#cite-";
 
+// Full-width brackets are matched alongside ASCII: gpt-oss models routinely
+// emit 【1】 rather than [1], and those must still become clickable chips.
+const CITATION_PATTERN = /[[【](\d{1,2})[\]】]/g;
+
 /**
  * Rewrite `[3]` into a markdown link so remark parses it into a node we can
  * render as a clickable chip. Fenced code blocks are left alone — a `[1]` in a
@@ -26,7 +30,7 @@ function linkifyCitations(markdown: string): string {
   return markdown
     .split(/(```[\s\S]*?```)/g)
     .map((part, index) =>
-      index % 2 === 1 ? part : part.replace(/\[(\d{1,2})\]/g, `[$1](${CITATION_HREF}$1)`),
+      index % 2 === 1 ? part : part.replace(CITATION_PATTERN, `[$1](${CITATION_HREF}$1)`),
     )
     .join("");
 }

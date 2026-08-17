@@ -61,7 +61,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         "api_ready",
         version=__version__,
         llm=settings.llm_model,
-        llm_configured=settings.ollama_api_key is not None,
+        llm_configured=settings.llm_api_key is not None,
         dense_model=settings.dense_model,
         parser=settings.pdf_parser,
         rerank=settings.rerank_enabled,

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import Field, SecretStr, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 
@@ -28,12 +28,21 @@ class Settings(BaseSettings):
     )
 
     # --- LLM -------------------------------------------------------------
-    ollama_api_key: SecretStr | None = None
-    ollama_base_url: str = "https://ollama.com"
-    llm_model: str = "gpt-oss:120b"
-    vision_model: str = "qwen3-vl:235b-cloud"
+    # Any OpenAI-compatible endpoint. Groq by default; Ollama Cloud is
+    # https://ollama.com/v1, OpenAI is https://api.openai.com/v1.
+    llm_api_key: SecretStr | None = None
+    llm_base_url: str = "https://api.groq.com/openai/v1"
+    llm_model: str = "openai/gpt-oss-120b"
     llm_temperature: float = 0.2
     llm_timeout_s: float = 120.0
+
+    # --- Vision (figure captioning) --------------------------------------
+    # Configured separately because the chat provider may not host a
+    # multimodal model — Groq, for one, does not. Unset values fall back to
+    # the chat provider above.
+    vision_model: str = "meta-llama/llama-4-scout-17b-16e-instruct"
+    vision_base_url: str | None = None
+    vision_api_key: SecretStr | None = None
 
     # --- Vector store ----------------------------------------------------
     qdrant_url: str = "http://localhost:6333"
@@ -58,7 +67,9 @@ class Settings(BaseSettings):
 
     # --- Ingestion -------------------------------------------------------
     pdf_parser: Literal["pymupdf", "docling"] = "pymupdf"
-    caption_images: bool = True
+    # Off by default: it needs a vision-capable provider, and silently burning
+    # a failed call per figure is worse than not trying.
+    caption_images: bool = False
     max_captions_per_doc: int = 60
     caption_concurrency: int = Field(default=4, ge=1, le=32)
 
@@ -77,7 +88,11 @@ class Settings(BaseSettings):
     # --- API -------------------------------------------------------------
     data_dir: Path = Path("./data")
     max_upload_mb: int = Field(default=50, ge=1, le=1000)
-    cors_origins: list[str] = ["http://localhost:3000"]
+    # NoDecode is load-bearing: without it pydantic-settings tries to JSON-decode
+    # any complex-typed value coming from the environment or a .env file, so a
+    # plain comma-separated CORS_ORIGINS raises before the validator below ever
+    # runs. NoDecode hands the raw string over instead.
+    cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:3000"]
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -102,6 +117,14 @@ class Settings(BaseSettings):
     @property
     def langfuse_enabled(self) -> bool:
         return bool(self.langfuse_public_key and self.langfuse_secret_key)
+
+    @property
+    def effective_vision_base_url(self) -> str:
+        return self.vision_base_url or self.llm_base_url
+
+    @property
+    def effective_vision_api_key(self) -> SecretStr | None:
+        return self.vision_api_key or self.llm_api_key
 
     def ensure_dirs(self) -> None:
         self.upload_dir.mkdir(parents=True, exist_ok=True)

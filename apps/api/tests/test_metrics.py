@@ -102,6 +102,26 @@ def test_all_citations_valid() -> None:
     assert metrics.citation_validity == 1.0
 
 
+def test_full_width_brackets_count_as_citations() -> None:
+    """gpt-oss models emit 【1】 rather than [1]; scoring that as uncited is wrong."""
+    metrics = score_answer("Revenue was $5.1B【1】 and margin 18.3%【2】.", [], source_count=2)
+
+    assert metrics.citation_count == 2
+    assert metrics.citation_validity == 1.0
+
+
+def test_mixed_bracket_styles_are_both_counted() -> None:
+    metrics = score_answer("First [1] and second 【2】.", [], source_count=2)
+
+    assert metrics.citation_count == 2
+
+
+def test_full_width_fabricated_citation_still_caught() -> None:
+    metrics = score_answer("Real【1】 and invented【9】.", [], source_count=2)
+
+    assert metrics.citation_validity == 0.5
+
+
 def test_uncited_answer_reports_zero_citations() -> None:
     metrics = score_answer("No citations at all.", [], source_count=3)
 

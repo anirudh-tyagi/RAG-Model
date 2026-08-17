@@ -68,6 +68,10 @@ accuracy does Figure 3 report?" has something to match against. Captioning runs 
 under a semaphore, is capped per document, and one failed figure costs one caption rather
 than the whole ingest.
 
+> **Off by default.** It needs a multimodal model, and Groq — the default provider — does not
+> host one. Point `VISION_BASE_URL` / `VISION_API_KEY` at a provider that does (Ollama Cloud's
+> `qwen3-vl`, or OpenAI) and set `CAPTION_IMAGES=true`.
+
 ---
 
 ## Quickstart
@@ -75,13 +79,20 @@ than the whole ingest.
 ### Docker (everything)
 
 ```bash
-cp .env.example .env       # then set OLLAMA_API_KEY
+cp .env.example .env       # then set LLM_API_KEY
 docker compose up --build
 ```
 
 Then open **http://localhost:3000**.
 
-Get an Ollama Cloud key at <https://ollama.com/settings/keys>.
+The LLM is reached over the **OpenAI-compatible** API, so the provider is a base-URL and
+model-name change rather than a code change:
+
+| Provider | `LLM_BASE_URL` | Key from |
+|---|---|---|
+| **Groq** (default) | `https://api.groq.com/openai/v1` | <https://console.groq.com/keys> |
+| Ollama Cloud | `https://ollama.com/v1` | <https://ollama.com/settings/keys> |
+| OpenAI | `https://api.openai.com/v1` | <https://platform.openai.com/api-keys> |
 
 > First start downloads ~1.9GB of models (BGE embeddings, the reranker, Whisper). They
 > persist in the `models` volume, so subsequent starts are fast.
@@ -106,21 +117,22 @@ make dev-web                       # http://localhost:3000
 ## Configuration
 
 All settings live in `.env` — see [`.env.example`](.env.example) for the annotated list.
-Only `OLLAMA_API_KEY` is strictly required.
+Only `LLM_API_KEY` is strictly required.
 
 The ones worth knowing about:
 
 | Variable | Default | Why you'd change it |
 |---|---|---|
-| `LLM_MODEL` | `gpt-oss:120b` | Any Ollama Cloud chat model |
-| `VISION_MODEL` | `qwen3-vl:235b-cloud` | Model used for figure captions |
+| `LLM_BASE_URL` | Groq | Any OpenAI-compatible endpoint (see table above) |
+| `LLM_MODEL` | `openai/gpt-oss-120b` | Any chat model your provider hosts |
+| `VISION_MODEL` / `VISION_BASE_URL` / `VISION_API_KEY` | llama-4-scout | Figure captioning. Set separately because your chat provider may not host a multimodal model — **Groq currently does not.** Leave URL and key blank to reuse the chat provider |
 | `DENSE_MODEL` | `BAAI/bge-large-en-v1.5` | `bge-base-en-v1.5` is ~3× faster on CPU. **Changing this needs a re-index** — the dimensions differ |
 | `RERANK_ENABLED` | `true` | Turn off to see what reranking is buying you |
 | `RETRIEVAL_CANDIDATES` | `40` | Shortlist size handed to the reranker |
 | `RETRIEVAL_TOP_K` | `6` | Passages given to the model |
 | `CHUNK_SIZE` / `CHUNK_OVERLAP` | `1200` / `150` | Characters |
 | `PDF_PARSER` | `pymupdf` | `docling` handles complex layouts and tables far better, but pulls in torch (`uv sync --extra docling`) |
-| `CAPTION_IMAGES` | `true` | Costs one vision call per figure |
+| `CAPTION_IMAGES` | `false` | Turn on once `VISION_*` points at a multimodal model. One vision call per figure |
 | `WHISPER_TASK` | `translate` | Whisper turns any supported language straight into English |
 | `LANGFUSE_*` | unset | Set to trace retrieval and generation. Tracing is a no-op without keys |
 
@@ -186,7 +198,7 @@ apps/
 │   │   ├── jobs/               queue · worker
 │   │   ├── eval/               dataset · metrics · runner · cli
 │   │   └── api/routes/         documents · chat · search · audio · health
-│   └── tests/                  129 tests, fully offline
+│   └── tests/                  132 tests, fully offline
 └── web/                        Next.js 15 · React 19 · TypeScript · Tailwind v4
     ├── app/
     ├── components/
@@ -235,16 +247,42 @@ The first version worked, but the design had some load-bearing problems. For the
 | **Text to speech** | Server-side gTTS writing wav files | Browser `SpeechSynthesis` |
 | **Embeddings** | sentence-transformers, ~2.5GB of torch to embed text on CPU | ONNX via fastembed — no torch in the default install |
 | **Frontend** | Vanilla JS, Tailwind from a CDN | Next.js 15, React 19, TypeScript, Tailwind v4 |
-| **Tests** | None | 129, offline, in CI |
+| **LLM provider** | `ChatOllama`, hardcoded to Ollama Cloud | OpenAI-compatible client — Groq, Ollama Cloud or OpenAI by config |
+| **Tests** | None | 132, offline, in CI |
 
 ---
 
+## Status
+
+**Statically verified:** ruff, strict mypy and **132 passing tests** on the API; Biome and
+`tsc --noEmit` on the web app.
+
+**Verified against live services:**
+
+- LLM client against Groq — health, non-streaming, streaming, abstention, error mapping
+- `pymupdf4llm` parsing a real PDF, with correct per-page attribution
+- heading-aware chunking, producing the right headings and page numbers
+- fastembed dense + BM25 sparse encoding
+- Qdrant collection creation and hybrid `Prefetch` + RRF `FusionQuery` (local mode)
+- cross-encoder reranking, ordering correctly
+- the full loop — retrieve → rerank → stream a cited answer — including follow-up
+  condensing and conversation persistence
+
+Two real bugs were caught this way and fixed: `gpt-oss` emits full-width `【1】` rather than
+`[1]`, which would have left every citation unclickable and scored citation validity at zero;
+and the streaming response was not closed when a client disconnected mid-answer.
+
+**Still unverified:** the Docker images have never been built, and the stack has not run
+under `docker compose` with Qdrant and Redis as real services. `next build` has not run
+either — it needs Node 20+.
+
 **Known limitations:**
 
+- Figure captioning is off by default: Groq hosts no multimodal model (see Configuration).
 - Ingestion is CPU-bound and slow on a laptop for large PDFs; `pymupdf` is the default parser
   for that reason.
 - Scanned PDFs need OCR — `pymupdf` will find no text. Try `PDF_PARSER=docling`.
-- Figure captioning costs one vision call per figure, capped at `MAX_CAPTIONS_PER_DOC=60`.
+- When on, captioning costs one vision call per figure, capped at `MAX_CAPTIONS_PER_DOC=60`.
 - Conversations are kept in Redis with a 30-day TTL; they are a convenience, not a system of
   record.
 - There is no authentication. This is a single-user local application as it stands.

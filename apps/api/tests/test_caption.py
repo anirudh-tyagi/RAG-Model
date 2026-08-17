@@ -5,11 +5,20 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from rag.config import Settings
 from rag.ingest.caption import caption_images
 from rag.ingest.parse import ImageRef, ParsedDocument, ParsedPage
 
 PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"0" * 64
+
+
+@pytest.fixture
+def settings(settings: Settings) -> Settings:
+    """Captioning ships off — it needs a vision-capable provider. These tests
+    are about the behaviour when it is switched on, so enable it here."""
+    return settings.model_copy(update={"caption_images": True})
 
 
 def make_image(image_dir: Path, name: str) -> Path:

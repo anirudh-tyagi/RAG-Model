@@ -111,7 +111,7 @@ export function useSpeech() {
       // Strip markdown syntax and citation markers so they aren't read out.
       const spoken = text
         .replace(/```[\s\S]*?```/g, " code block ")
-        .replace(/\[\d{1,2}\]/g, "")
+        .replace(/[[【]\d{1,2}[\]】]/g, "")
         .replace(/[*_`#>|-]/g, " ");
       const utterance = new SpeechSynthesisUtterance(spoken);
       utterance.onend = () => setSpeakingId(null);
