@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+# A new push supersedes an in-flight run on the same ref.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: API — lint, types, tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/api
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: apps/api/uv.lock
+
+      # The test suite is fully offline — fakeredis, fake vector store, mocked
+      # LLM — so CI needs no services and no API key.
+      - name: Install
+        run: uv sync --frozen --group dev
+
+      - name: Lint
+        run: uv run ruff check src tests
+
+      - name: Format
+        run: uv run ruff format --check src tests
+
+      - name: Types
+        run: uv run mypy src
+
+      - name: Tests
+        run: uv run pytest --cov=rag --cov-report=term-missing
+
+  web:
+    name: Web — lint, types, build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npx biome ci .
+
+      - name: Types
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+  docker:
+    name: Docker images build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: API image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./apps/api
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Web image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./apps/web
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

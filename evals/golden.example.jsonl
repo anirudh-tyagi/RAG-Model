@@ -1,0 +1,26 @@
+# Example golden set. Copy to evals/golden.jsonl and rewrite for your own documents.
+#
+# Blank lines and lines starting with '#' are ignored.
+#
+# Fields:
+#   id                 stable identifier, appears in the report
+#   question           asked verbatim
+#   expected_keywords  strings the answer must contain (case-insensitive).
+#                      Use exact figures and names — this is what catches
+#                      a model that paraphrases a number into being wrong.
+#   relevant_pages     pages that actually contain the answer. Drives
+#                      recall / MRR / nDCG. Page-level rather than chunk-level
+#                      so the set survives re-chunking.
+#   doc_ids            optional: restrict retrieval to these documents
+#                      (get them from `uv run rag-eval list-docs`)
+#   note               optional reminder for whoever reads the report
+#
+# Aim for 20-50 cases and include the awkward ones deliberately: questions whose
+# answer is only in a figure, questions that span two sections, and questions the
+# documents genuinely do not answer — for those, leave expected_keywords empty
+# and check the abstention rate instead of pretending there is a right answer.
+{"id": "abstract-01", "question": "What problem does this paper set out to solve?", "expected_keywords": [], "relevant_pages": [1], "note": "Answer should come from the abstract."}
+{"id": "figure-01", "question": "What accuracy does the model reach on the benchmark, and on which dataset?", "expected_keywords": ["%"], "relevant_pages": [5], "note": "Number lives in a chart; exercises figure captioning."}
+{"id": "table-01", "question": "How many parameters does the largest variant have?", "expected_keywords": ["B"], "relevant_pages": [4], "note": "Table lookup."}
+{"id": "method-01", "question": "Which optimiser and learning rate were used for training?", "expected_keywords": ["learning rate"], "relevant_pages": [3, 4], "note": "Spans two pages."}
+{"id": "absent-01", "question": "What was the total electricity cost of training in euros?", "expected_keywords": [], "relevant_pages": [], "note": "Not in the document. A good answer abstains rather than inventing a figure."}

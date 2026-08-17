@@ -1,0 +1,88 @@
+# Full stack: vector store, queue, API, ingestion worker, web UI.
+#
+#   cp .env.example .env   # then set OLLAMA_API_KEY
+#   docker compose up --build
+#
+# First start downloads the embedding, reranking and Whisper models (~1.9GB
+# total). They land in the `models` volume, so later starts are fast.
+
+name: rag-model
+
+x-api-env: &api-env
+  # Service names resolve on the compose network; these override whatever the
+  # host-oriented values in .env say.
+  QDRANT_URL: http://qdrant:6333
+  REDIS_URL: redis://redis:6379/0
+  DATA_DIR: /data
+  CORS_ORIGINS: http://localhost:3000
+
+x-api-build: &api-build
+  build:
+    context: ./apps/api
+  env_file: .env
+  volumes:
+    # Uploads and parsed artifacts, shared so the worker writes what the API reads.
+    - data:/data
+    # Model weights, so the API and worker download them once between them.
+    - models:/models
+  depends_on:
+    qdrant:
+      condition: service_started
+    redis:
+      condition: service_healthy
+  restart: unless-stopped
+
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.12.5
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant:/qdrant/storage
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    # Light persistence: losing the queue is survivable, losing document status
+    # mid-ingest is annoying.
+    command: redis-server --save 60 1 --appendonly no --loglevel warning
+    volumes:
+      - redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    <<: *api-build
+    environment:
+      <<: *api-env
+    ports:
+      - "8000:8000"
+
+  worker:
+    <<: *api-build
+    environment:
+      <<: *api-env
+    command: ["arq", "rag.jobs.worker.WorkerSettings"]
+
+  web:
+    build:
+      context: ./apps/web
+      args:
+        # Baked into the client bundle: this is the origin the *browser* uses,
+        # so it is the published port on the host, not the compose hostname.
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  qdrant:
+  redis:
+  data:
+  models:
