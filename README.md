@@ -272,10 +272,6 @@ Two real bugs were caught this way and fixed: `gpt-oss` emits full-width `【1�
 `[1]`, which would have left every citation unclickable and scored citation validity at zero;
 and the streaming response was not closed when a client disconnected mid-answer.
 
-**Still unverified:** the Docker images have never been built, and the stack has not run
-under `docker compose` with Qdrant and Redis as real services. `next build` has not run
-either — it needs Node 20+.
-
 **Known limitations:**
 
 - Figure captioning is off by default: Groq hosts no multimodal model (see Configuration).
